@@ -1,0 +1,86 @@
+version: "3"
+
+vars:
+  BANNER: "echo -e \"\\033[1;33m$\\033[0m\""
+  APP_NAME: snipraw
+  TW_INPUT: ./src/web/styles/input.css
+  TW_OUTPUT: ./src/server/assets/styles/app.min.css
+
+tasks:
+  default:
+    silent: true
+    cmds:
+      - "{{.BANNER}} Taskfile for {{.APP_NAME}}: run 'task --list' for available tasks"
+
+  tidy:
+    desc: Tidy go modules
+    silent: true
+    cmds:
+      - "{{.BANNER}} Tidying {{.APP_NAME}}"
+      - go mod tidy
+      - go mod verify
+
+  setup:
+    desc: Setup dependencies
+    silent: true
+    vars:
+      RUNNER:
+        sh: |
+          if command -v bun &>/dev/null; then echo "bun";
+          elif command -v node &>/dev/null; then echo "node";
+          else echo ""; fi
+    cmds:
+      - "{{.BANNER}} Setting up dependencies"
+      - |
+        if [ -z "{{.RUNNER}}" ]; then
+          echo "No JS runtime found. Install node or bun."
+          exit 1
+        fi
+        {{.RUNNER}} scripts/ci-deps-setup.mjs
+
+  generate-templates:
+    desc: Run code generation for templ templates
+    internal: true
+    silent: true
+    cmds:
+      - "{{.BANNER}} Generating templ templates"
+      - tools/templ generate
+
+  generate-styles:
+    desc: Run code generation for tailwind styles
+    internal: true
+    silent: true
+    cmds:
+      - "{{.BANNER}} Generating tailwind styles"
+      - tools/tailwindcss --input {{.TW_INPUT}} --output {{.TW_OUTPUT}} --minify
+
+  generate:
+    desc: Run code generation for templates and styles
+    silent: true
+    cmds:
+      - task: generate-templates
+      - echo ""
+      - task: generate-styles
+
+  build:
+    desc: Build the application binary for the current platform
+    silent: true
+    deps: [setup]
+    cmds:
+      - "{{.BANNER}} Building {{.APP_NAME}} for {{OS}} on {{ARCH}}"
+      - goreleaser build --single-target --snapshot --clean
+
+  cleanup:
+    desc: Cleanup build artifacts and generated files
+    silent: true
+    cmds:
+      - "{{.BANNER}} Cleaning build artifacts and generated files"
+      - platforms: [darwin, linux]
+        cmd: rm -rf ./dist && rm -f {{.TW_OUTPUT}} && find . -name "*_templ.go" -delete
+      - platforms: ["windows"]
+        cmd: |
+          powershell -NoLogo -NoProfile -Command "
+            Remove-Item -Recurse -Force -ErrorAction SilentlyContinue ./dist;
+            Remove-Item -Force -ErrorAction SilentlyContinue '{{.TW_OUTPUT}}';
+            Get-ChildItem -Recurse -Filter '*_templ.go' | Remove-Item -Force
+          "

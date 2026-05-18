@@ -1,0 +1,9 @@
+services:
+  snipraw:
+    container_name: snipraw-snippets-server
+    image: docker.io/patppuccin/snipraw:latest
+    restart: unless-stopped
+    ports:
+      - "8245:8245"
+    volumes:
+      - ./snippets:/snippets

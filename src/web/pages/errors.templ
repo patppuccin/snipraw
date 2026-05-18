@@ -1,0 +1,94 @@
+package pages
+
+import (
+	"github.com/patppuccin/snipraw/src/config"
+	"github.com/patppuccin/snipraw/src/consts"
+	"github.com/patppuccin/snipraw/src/web/icons"
+	"github.com/patppuccin/snipraw/src/web/layouts"
+	"strings"
+)
+
+type errorPageProps struct {
+	Code string
+	Desc string
+	Mesg string
+}
+
+templ errorPage(p errorPageProps) {
+	<div class="flex flex-1 items-center px-6">
+		<div class="max-w-lg w-full">
+			<p class="text-6xl font-extrabold text-primary tracking-widest uppercase">{ p.Code }</p>
+			<h1 class="mt-4 text-2xl font-bold text-base-content tracking-tight">{ p.Desc }</h1>
+			if p.Mesg != "" {
+				<p class="mt-4 text-base text-base-content/50 leading-relaxed">{ p.Mesg }</p>
+			}
+			<div class="flex items-center gap-3 mt-10">
+				<button class="btn btn-soft gap-2" onclick="window.history.back();">
+					@icons.ArrowLeft(icons.Props{Size: 16})
+					go back
+				</button>
+				<a href="/" class="btn btn-primary gap-2">
+					@icons.House(icons.Props{Size: 16})
+					home
+				</a>
+			</div>
+		</div>
+	</div>
+}
+
+templ NotFoundPage(cfg *config.Config, errMsg string) {
+	{{
+		if errMsg == "" {
+			errMsg = "The page you are looking for does not exist or has been moved."
+		}
+	}}
+	@layouts.BaseLayout(layouts.Props{
+		Title: strings.ToTitle(consts.AppName),
+		Desc:  "404 Page Not Found",
+		Cfg:   cfg,
+	}) {
+		@errorPage(errorPageProps{
+			Code: "404",
+			Desc: "Page Not Found",
+			Mesg: errMsg,
+		})
+	}
+}
+
+templ ServerErrorPage(cfg *config.Config, errMsg string) {
+	{{
+		if errMsg == "" {
+			errMsg = "An unexpected error occurred. Please try again later."
+		}
+	}}
+	@layouts.BaseLayout(layouts.Props{
+		Title: strings.ToTitle(consts.AppName),
+		Desc:  "500 Internal Server Error",
+		Cfg:   cfg,
+	}) {
+		@errorPage(errorPageProps{
+			Code: "500",
+			Desc: "Something went wrong on our end.",
+			Mesg: errMsg,
+		})
+	}
+}
+
+templ MethodNotAllowedPage(cfg *config.Config, errMsg string) {
+	{{
+		if errMsg == "" {
+			errMsg = "The HTTP method used is not supported for this route."
+		}
+	}}
+	@layouts.BaseLayout(layouts.Props{
+		Title: strings.ToTitle(consts.AppName),
+		Desc:  "405 Method Not Allowed",
+		Cfg:   cfg,
+	}) {
+		@errorPage(errorPageProps{
+			Code: "405",
+			Desc: "Method Not Allowed",
+			Mesg: errMsg,
+		})
+	}
+}

@@ -1,0 +1,159 @@
+package layouts
+
+import (
+	"github.com/patppuccin/snipraw/src/config"
+	"github.com/patppuccin/snipraw/src/consts"
+	"github.com/patppuccin/snipraw/src/web/icons"
+)
+
+type shortcut struct {
+	key   string
+	label string
+}
+
+type shortcutGroup struct {
+	label     string
+	shortcuts []shortcut
+}
+
+var shortcuts = []shortcutGroup{
+	{
+		label: "Global",
+		shortcuts: []shortcut{
+			{key: "?", label: "Show shortcuts"},
+			{key: "Esc", label: "Close / Go back"},
+		},
+	},
+	{
+		label: "Directory",
+		shortcuts: []shortcut{
+			{key: "d", label: "Download as zip"},
+		},
+	},
+	{
+		label: "File",
+		shortcuts: []shortcut{
+			{key: "c", label: "Copy to clipboard"},
+			{key: "d", label: "Download file"},
+			{key: "r", label: "View raw"},
+		},
+	},
+}
+
+type Props struct {
+	Title string
+	Desc  string
+	Cfg   *config.Config
+}
+
+templ navBar(cfg *config.Config) {
+	<header class="sticky top-0 z-50 bg-base-200 border-base-300 border-b">
+		<div class="navbar max-w-screen-xl mx-auto px-4">
+			<div class="flex-1">
+				<a href="/" class="flex items-center gap-2 px-2 py-1">
+					<img src="/assets/icons/favicon.svg" alt="Snipraw" class="w-6 h-6"/>
+					<span class="text-base font-semibold tracking-tight">{ cfg.Title }</span>
+				</a>
+			</div>
+			<div class="flex-none">
+				<label class="swap swap-rotate btn btn-square btn-soft focus:outline-none focus:ring focus:ring-primary">
+					<input
+						type="checkbox"
+						class="theme-controller"
+						value="dark"
+						onchange="
+							const t = this.checked ? 'dark' : 'light'
+							document.documentElement.setAttribute('data-theme', t)
+							localStorage.setItem('theme', t)
+						"
+					/>
+					<div class="swap-off">
+						@icons.Moon(icons.Props{Size: 18})
+					</div>
+					<div class="swap-on">
+						@icons.Sun(icons.Props{Size: 18})
+					</div>
+				</label>
+			</div>
+		</div>
+	</header>
+}
+
+templ footer(cfg *config.Config) {
+	<footer class="shrink-0 bg-base-200 border-base-300 border-t">
+		<div class="max-w-screen-xl mx-auto px-6 py-3 flex items-center justify-between">
+			<div>
+				if cfg.Attribution {
+					<p class="text-sm text-base-content/70">
+						Hosted with <a href="https://github.com/patppuccin/snipraw" class="link link-hover font-medium hover:text-primary" target="_blank" rel="noopener noreferrer">{ consts.AppName } { consts.AppVersion }</a>
+					</p>
+				} else if cfg.FooterNote != "" {
+					<p class="text-sm text-base-content/70">{ cfg.FooterNote }</p>
+				}
+			</div>
+			<button
+				class="btn btn-soft btn-square btn-sm focus:outline-none focus:ring focus:ring-primary"
+				aria-label="Keyboard shortcuts"
+				onclick="document.getElementById('shortcuts-modal').showModal()"
+			>
+				@icons.CircleQuestionMark(icons.Props{Size: 16})
+			</button>
+		</div>
+	</footer>
+	<dialog id="shortcuts-modal" class="modal">
+		<div class="modal-box">
+			<h3 class="font-bold text-lg">Keyboard Shortcuts</h3>
+			<div class="mt-4 flex flex-col gap-2">
+				for _, group := range shortcuts {
+					<div class="mt-4">
+						<div class="flex items-center gap-2 mb-3">
+							<p class="text-sm font-semibold uppercase tracking-wider text-base-content/40 shrink-0">{ group.label }</p>
+							<div class="flex-1 border-t border-base-300"></div>
+						</div>
+						<div class="flex flex-col gap-2">
+							for _, s := range group.shortcuts {
+								<div class="flex justify-between items-center">
+									<span class="text-base-content/60">{ s.label }</span>
+									<kbd class="kbd kbd-md">{ s.key }</kbd>
+								</div>
+							}
+						</div>
+					</div>
+				}
+			</div>
+			<div class="modal-action">
+				<form method="dialog">
+					<button class="btn btn-soft btn-sm focus:outline-none focus:ring focus:ring-primary">Close</button>
+				</form>
+			</div>
+		</div>
+		<form method="dialog" class="modal-backdrop">
+			<button>Close</button>
+		</form>
+	</dialog>
+	<script>
+		document.addEventListener('keydown', (e) => {
+			if (e.key === '?' && !e.ctrlKey && !e.metaKey && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+				document.getElementById('shortcuts-modal').showModal()
+			}
+		})
+	</script>
+}
+
+templ BaseLayout(p Props) {
+	<!DOCTYPE html>
+	<html lang="en" data-theme="dark">
+		<head>
+			@commonHTMLHead(p)
+		</head>
+		<body class="flex flex-col h-screen overflow-hidden bg-base-100">
+			@navBar(p.Cfg)
+			<main class="flex flex-col flex-grow overflow-y-auto">
+				<div class="flex flex-col flex-1 max-w-screen-xl mx-auto w-full px-6 py-8">
+					{ children... }
+				</div>
+			</main>
+			@footer(p.Cfg)
+		</body>
+	</html>
+}

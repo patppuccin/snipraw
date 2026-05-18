@@ -1,0 +1,250 @@
+@import "tailwindcss";
+
+@source not "./tailwindcss.exe";
+@source not "./daisyui{,*}.mjs";
+
+@plugin "@tailwindcss/typography";
+
+@plugin "./daisyui.mjs";
+
+@plugin "./daisyui-theme.mjs" {
+  name: "light";
+  default: true;
+  prefersdark: false;
+  color-scheme: "light";
+
+  --color-base-100: oklch(98% 0.004 90);
+  --color-base-200: oklch(94.5% 0.004 90);
+  --color-base-300: oklch(89% 0.004 90);
+  --color-base-content: oklch(15% 0 0);
+
+  --color-primary: oklch(62% 0.08 155);
+  --color-primary-content: oklch(98% 0 0);
+
+  --color-secondary: oklch(58% 0.06 120);
+  --color-secondary-content: oklch(98% 0 0);
+
+  --color-accent: oklch(65% 0.07 80);
+  --color-accent-content: oklch(15% 0 0);
+
+  --color-neutral: oklch(20% 0 0);
+  --color-neutral-content: oklch(98% 0 0);
+
+  --color-info: oklch(68% 0.09 245);
+  --color-info-content: oklch(98% 0 0);
+
+  --color-success: oklch(62% 0.08 155);
+  --color-success-content: oklch(98% 0 0);
+
+  --color-warning: oklch(76% 0.1 80);
+  --color-warning-content: oklch(15% 0 0);
+
+  --color-error: oklch(65% 0.1 15);
+  --color-error-content: oklch(98% 0 0);
+
+  --radius-selector: 0.375rem;
+  --radius-field: 0.375rem;
+  --radius-box: 0.5rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+@plugin "./daisyui-theme.mjs" {
+  name: "dark";
+  default: false;
+  prefersdark: true;
+  color-scheme: "dark";
+
+  --color-base-100: oklch(17% 0 0);
+  --color-base-200: oklch(20% 0 0);
+  --color-base-300: oklch(24% 0 0);
+  --color-base-content: oklch(92% 0 0);
+
+  --color-primary: oklch(65% 0.08 155);
+  --color-primary-content: oklch(15% 0 0);
+
+  --color-secondary: oklch(60% 0.06 120);
+  --color-secondary-content: oklch(15% 0 0);
+
+  --color-accent: oklch(68% 0.07 80);
+  --color-accent-content: oklch(15% 0 0);
+
+  --color-neutral: oklch(92% 0 0);
+  --color-neutral-content: oklch(17% 0 0);
+
+  --color-info: oklch(68% 0.09 245);
+  --color-info-content: oklch(17% 0 0);
+
+  --color-success: oklch(65% 0.08 155);
+  --color-success-content: oklch(17% 0 0);
+
+  --color-warning: oklch(76% 0.1 80);
+  --color-warning-content: oklch(17% 0 0);
+
+  --color-error: oklch(65% 0.1 15);
+  --color-error-content: oklch(92% 0 0);
+
+  --radius-selector: 0.375rem;
+  --radius-field: 0.375rem;
+  --radius-box: 0.5rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+.chroma {
+  width: 100%;
+  font-size: 0.875rem;
+  padding: 0.5rem 0;
+}
+
+.chroma > pre {
+  margin: 0;
+  padding: 1rem;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* Styles for the GOLDMARK Markdown Renderer */
+
+.prose h1 {
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.prose h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.prose h3 {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.prose pre {
+  border-radius: 0.5rem;
+  padding: 1rem;
+  overflow-x: auto;
+  font-size: 0.875rem;
+  margin: 0;
+}
+
+.prose code {
+  padding: 0.125rem 0.25rem;
+  border-radius: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.prose pre code {
+  padding: 0;
+}
+
+.prose p img {
+  display: inline;
+  vertical-align: middle;
+}
+
+.prose p:has(img) {
+  text-align: center;
+}
+
+.prose .callout p:first-of-type::before {
+  content: none;
+}
+.prose .callout p:last-of-type::after {
+  content: none;
+}
+
+.prose .callout {
+  border-radius: 0.5rem;
+  padding: 0;
+  margin: 1.25rem 0;
+  font-style: normal;
+  overflow: hidden;
+  border: none;
+  outline: none;
+}
+
+.prose .callout-title {
+  font-weight: 600;
+  font-size: 0.75rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  padding: 0.35rem 0.75rem;
+  margin: 0;
+}
+
+.prose .callout > p {
+  padding: 0.5rem 0.75rem;
+  margin: 0;
+  font-size: 0.9rem;
+  opacity: 0.9;
+}
+
+.prose .callout > div {
+  margin: 0 0.75rem 0.5rem;
+  border-radius: 0.375rem;
+  overflow: hidden;
+}
+
+.prose .callout-note .callout-title {
+  background-color: color-mix(in oklch, var(--color-info) 15%, transparent);
+  color: var(--color-info);
+}
+.prose .callout-note {
+  background-color: color-mix(in oklch, var(--color-info) 5%, transparent);
+}
+
+.prose .callout-tip .callout-title {
+  background-color: color-mix(in oklch, var(--color-success) 15%, transparent);
+  color: var(--color-success);
+}
+.prose .callout-tip {
+  background-color: color-mix(in oklch, var(--color-success) 5%, transparent);
+}
+
+.prose .callout-warning .callout-title {
+  background-color: color-mix(in oklch, var(--color-warning) 15%, transparent);
+  color: var(--color-warning);
+}
+.prose .callout-warning {
+  background-color: color-mix(in oklch, var(--color-warning) 5%, transparent);
+}
+
+.prose .callout-important .callout-title {
+  background-color: color-mix(in oklch, var(--color-primary) 15%, transparent);
+  color: var(--color-primary);
+}
+.prose .callout-important {
+  background-color: color-mix(in oklch, var(--color-primary) 5%, transparent);
+}
+
+.prose .callout-caution .callout-title {
+  background-color: color-mix(in oklch, var(--color-error) 15%, transparent);
+  color: var(--color-error);
+}
+.prose .callout-caution {
+  background-color: color-mix(in oklch, var(--color-error) 5%, transparent);
+}
+
+[data-theme="light"] .prose pre {
+  background: oklch(89% 0.004 90);
+  color: oklch(15% 0 0);
+}
+
+[data-theme="light"] .prose code {
+  background: oklch(89% 0.004 90);
+  color: oklch(15% 0 0);
+}
+
+[data-theme="dark"] .prose pre {
+  background: oklch(24% 0 0);
+  color: oklch(92% 0 0);
+}
+
+[data-theme="dark"] .prose code {
+  background: oklch(24% 0 0);
+  color: oklch(92% 0 0);
+}

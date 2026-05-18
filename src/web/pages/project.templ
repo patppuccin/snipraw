@@ -1,0 +1,248 @@
+package pages
+
+import (
+	"fmt"
+	"github.com/patppuccin/snipraw/src/config"
+	"github.com/patppuccin/snipraw/src/helpers"
+	"github.com/patppuccin/snipraw/src/web/icons"
+	"github.com/patppuccin/snipraw/src/web/layouts"
+	"os"
+	"path/filepath"
+	"strconv"
+	"strings"
+)
+
+type ProjectPageProps struct {
+	Project         string
+	FilePath        string
+	Entries         []os.DirEntry
+	FileContent     []byte
+	FileName        string
+	HighlightedHTML string
+	ReadmeHTML      string
+	TooLarge        bool
+}
+
+type breadcrumbPart struct {
+	Label string
+	Path  string
+}
+
+func breadcrumbParts(project, filePath string) []breadcrumbPart {
+	parts := strings.Split(strings.Trim(filePath, "/"), "/")
+	var result []breadcrumbPart
+	for i, part := range parts {
+		if i == len(parts)-1 {
+			result = append(result, breadcrumbPart{Label: part})
+		} else {
+			joined := strings.Join(parts[:i+1], "/")
+			result = append(result, breadcrumbPart{
+				Label: part,
+				Path:  fmt.Sprintf("/project/%s/view/%s", project, joined),
+			})
+		}
+	}
+	return result
+}
+
+templ Project(cfg *config.Config, p ProjectPageProps) {
+	@layouts.BaseLayout(layouts.Props{
+		Title: p.Project,
+		Desc:  "A filesystem-based code snippet server.",
+		Cfg:   cfg,
+	}) {
+		@project(p)
+	}
+}
+
+templ project(p ProjectPageProps) {
+	<div class="flex flex-col gap-4">
+		@breadcrumbs(p.Project, p.FilePath)
+		if p.FileName != "" {
+			@fileView(p)
+		} else {
+			@dirView(p)
+		}
+	</div>
+}
+
+templ breadcrumbs(project string, filePath string) {
+	<div class="breadcrumbs text-sm">
+		<ul>
+			<li><a href="/">Home</a></li>
+			<li><a href={ templ.SafeURL(fmt.Sprintf("/project/%s/view/", project)) }>{ project }</a></li>
+			if filePath != "" {
+				for _, part := range breadcrumbParts(project, filePath) {
+					<li>
+						if part.Path != "" {
+							<a href={ templ.SafeURL(part.Path) }>{ part.Label }</a>
+						} else {
+							{ part.Label }
+						}
+					</li>
+				}
+			}
+		</ul>
+	</div>
+}
+
+templ dirView(p ProjectPageProps) {
+	<div class="flex flex-col gap-0 rounded-lg border border-base-300 overflow-hidden">
+		<div class="flex items-center justify-between p-2 bg-base-200 border-b border-base-300">
+			<span class="text-base text-base-content/50 font-mono mx-2">{ strconv.Itoa(len(p.Entries)) } entries</span>
+			<a href={ templ.SafeURL(fmt.Sprintf("/project/%s/download/%s", p.Project, p.FilePath)) } class="btn btn-primary btn-sm">Download</a>
+		</div>
+		if len(p.Entries) == 0 {
+			<div class="flex items-center justify-center py-20 bg-base-100">
+				<p class="text-base-content/40 text-sm">No entries found.</p>
+			</div>
+		} else {
+			<div class="flex flex-col bg-base-100">
+				for _, e := range p.Entries {
+					<a
+						href={ templ.SafeURL(fmt.Sprintf("/project/%s/view/%s", p.Project, filepath.Join(p.FilePath, e.Name()))) }
+						class="flex items-center gap-3 px-4 py-2.5 hover:bg-base-200 transition-colors border-b border-base-300 last:border-b-0"
+					>
+						if e.IsDir() {
+							@icons.Folder(icons.Props{Size: 16, Class: "text-base-content/40 shrink-0"})
+						} else if helpers.IsImage(e.Name()) {
+							@icons.FileImage(icons.Props{Size: 16, Class: "text-base-content/40 shrink-0"})
+						} else if helpers.IsPDF(e.Name()) {
+							@icons.FilePDF(icons.Props{Size: 16, Class: "text-base-content/40 shrink-0"})
+						} else {
+							@icons.FileText(icons.Props{Size: 16, Class: "text-base-content/40 shrink-0"})
+						}
+						<span class="text-sm truncate">{ e.Name() }</span>
+					</a>
+				}
+			</div>
+		}
+	</div>
+	if p.ReadmeHTML != "" {
+		<div class="flex flex-col gap-0 rounded-lg border border-base-300 overflow-hidden mt-4">
+			<div class="flex items-center px-4 py-2 bg-base-200 border-b border-base-300">
+				<span class="text-base text-base-content/50 font-mono mx-2">README</span>
+			</div>
+			<div class="p-6 bg-base-100 prose prose-sm max-w-none">
+				@templ.Raw(p.ReadmeHTML)
+			</div>
+		</div>
+		<script>
+			document.querySelectorAll('.prose .chroma').forEach(block => {
+			const wrapper = document.createElement('div')
+			wrapper.style.position = 'relative'
+			block.parentNode.insertBefore(wrapper, block)
+			wrapper.appendChild(block)
+
+			const btn = document.createElement('button')
+			btn.textContent = 'Copy'
+			btn.className = 'btn btn-ghost btn-sm absolute top-2 right-2'
+			btn.onclick = () => {
+				const pre = block.querySelector('pre')
+				const text = pre ? pre.textContent.trim() : block.textContent.trim()
+				navigator.clipboard.writeText(text).then(() => {
+					btn.textContent = 'Copied!'
+					btn.classList.add('text-success')
+					setTimeout(() => {
+						btn.textContent = 'Copy'
+						btn.classList.remove('text-success')
+					}, 2000)
+				})
+			}
+			wrapper.appendChild(btn)
+		})
+		</script>
+	}
+	<div id="shortcut-data" data-project={ p.Project } data-filepath={ p.FilePath } hidden></div>
+	<script>
+		(function() {
+			const el = document.getElementById('shortcut-data')
+			const project = el.dataset.project
+			const filepath = el.dataset.filepath
+
+			document.addEventListener('keydown', (e) => {
+				if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return
+				if (e.key === 'd') {
+					window.location.href = `/project/${project}/download/${filepath}`
+				}
+			})
+		})()
+	</script>
+}
+
+templ fileView(p ProjectPageProps) {
+	<div class="flex flex-col gap-0 rounded-lg border border-base-300 overflow-hidden">
+		<div class="flex items-center justify-between p-2 bg-base-200 border-b border-base-300">
+			<span class="text-base text-base-content/50 font-mono mx-2">{ p.FileName }</span>
+			<div class="flex gap-2">
+				if helpers.IsImage(p.FileName) || helpers.IsPDF(p.FileName) || p.TooLarge {
+					<a href={ templ.SafeURL(fmt.Sprintf("/project/%s/download/%s", p.Project, p.FilePath)) } class="btn btn-primary btn-sm">Download</a>
+				} else {
+					<button id="copy-btn" class="btn btn-primary btn-sm" onclick="copyContent(this)">Copy</button>
+					<a href={ templ.SafeURL(fmt.Sprintf("/project/%s/download/%s", p.Project, p.FilePath)) } class="btn btn-primary btn-sm">Download</a>
+					<a href={ templ.SafeURL(fmt.Sprintf("/project/%s/blob/%s", p.Project, p.FilePath)) } class="btn btn-primary btn-sm" target="_blank">Raw</a>
+				}
+			</div>
+		</div>
+		if p.TooLarge {
+			<div class="flex flex-col items-center justify-center gap-3 py-10 bg-base-100">
+				<p class="text-base-content/50 text-sm">File is too large to preview. Download it to view it.</p>
+			</div>
+		} else if helpers.IsImage(p.FileName) {
+			<div class="flex justify-center p-4 bg-base-100">
+				<img src={ fmt.Sprintf("/project/%s/blob/%s", p.Project, p.FilePath) } alt={ p.FileName } class="max-w-full rounded"/>
+			</div>
+		} else if helpers.IsPDF(p.FileName) {
+			<div class="flex flex-col items-center justify-center gap-3 py-10 bg-base-100">
+				<p class="text-base-content/50 text-sm">PDF preview is not available.</p>
+			</div>
+		} else if helpers.IsMarkdown(p.FileName) {
+			<div class="prose prose-sm max-w-none p-6 bg-base-100">
+				@templ.Raw(p.HighlightedHTML)
+			</div>
+		} else {
+			<div id="code-content" class="overflow-x-auto text-sm">
+				@templ.Raw(p.HighlightedHTML)
+			</div>
+		}
+	</div>
+	<script>
+		function copyContent(btn) {
+			if (btn.disabled) return
+			btn.disabled = true
+			const text = document.getElementById('code-content').innerText
+			navigator.clipboard.writeText(text).then(() => {
+				btn.textContent = 'Copied to clipboard'
+				btn.classList.add('text-success')
+				setTimeout(() => {
+					btn.textContent = 'Copy'
+					btn.disabled = false
+					btn.classList.remove('text-success')
+				}, 2000)
+			})
+		}
+	</script>
+	<div id="shortcut-data" data-project={ p.Project } data-filepath={ p.FilePath } hidden></div>
+	<script>
+		(function() {
+			const el = document.getElementById('shortcut-data')
+			const project = el.dataset.project
+			const filepath = el.dataset.filepath
+
+			document.addEventListener('keydown', (e) => {
+				if (['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) return
+				switch (e.key) {
+					case 'r':
+						window.open(`/project/${project}/blob/${filepath}`, '_blank')
+						break
+					case 'c':
+						document.getElementById('copy-btn')?.click()
+						break
+					case 'd':
+						window.location.href = `/project/${project}/download/${filepath}`
+						break
+				}
+			})
+		})()
+	</script>
+}

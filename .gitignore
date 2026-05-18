@@ -1,0 +1,49 @@
+# Binaries
+snipraw
+snipraw.exe
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test artifacts
+*.test
+*.out
+coverage.*
+*.coverprofile
+profile.cov
+
+# Node artifacts
+node_modules/
+
+# Vitepress artifacts
+docs/.vitepress/dist
+docs/.vitepress/cache
+
+# Go workspace
+go.work
+go.work.sum
+
+# Templ generated files
+*_templ.go
+
+# Build output
+dist/
+bin/
+
+# Development artifacts
+tools/
+
+# Config (local overrides)
+config.yaml
+config.local.yaml
+*.local.yaml
+
+# Editor/IDE artifacts
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db

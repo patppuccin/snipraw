@@ -1,0 +1,62 @@
+package layouts
+
+import (
+	"fmt"
+	"github.com/patppuccin/snipraw/src/consts"
+	"github.com/patppuccin/snipraw/src/helpers"
+)
+
+templ chromaCSS() {
+	@templ.Raw("<style>" + helpers.ChromaLightCSS + helpers.ChromaDarkCSS + "</style>")
+}
+
+templ commonHTMLHead(p Props) {
+	<meta charset="UTF-8"/>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+	{{
+		title := consts.PageTitle
+		if p.Title != "" {
+			title = p.Title
+		}
+
+		desc := consts.PageDesc
+		if p.Desc != "" {
+			desc = p.Desc
+		}
+
+		ogTitle := fmt.Sprintf("%s | %s", consts.AppName, title)
+	}}
+	<script>
+		(function() {
+			const theme = localStorage.getItem('theme') ||
+				(window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+			document.documentElement.setAttribute('data-theme', theme)
+			document.addEventListener('DOMContentLoaded', function() {
+				const ctrl = document.querySelector('.theme-controller')
+				if (ctrl) ctrl.checked = theme === 'dark'
+			})
+		})()
+	</script>
+	<title>{ title } | { desc }</title>
+	<meta name="description" content={ desc }/>
+	<meta name="robots" content="index, follow"/>
+	<meta name="theme-color" content="#0f1117"/>
+	<link rel="canonical" href={ templ.URL(p.Cfg.BaseURL) }/>
+	<link rel="icon" type="image/x-icon" href="/assets/icons/favicon.ico"/>
+	<link rel="icon" type="image/png" sizes="96x96" href="/assets/icons/favicon-96x96.png"/>
+	<link rel="apple-touch-icon" href="/assets/icons/apple-touch-icon.png"/>
+	<link rel="manifest" href="/assets/manifest.json"/>
+	<meta property="og:title" content={ ogTitle }/>
+	<meta property="og:site_name" content={ consts.AppName }/>
+	<meta property="og:description" content={ desc }/>
+	<meta property="og:type" content="website"/>
+	<meta property="og:url" content={ p.Cfg.BaseURL }/>
+	<meta property="og:locale" content="en_US"/>
+	<meta name="twitter:card" content="summary"/>
+	<meta name="twitter:title" content={ ogTitle }/>
+	<meta name="twitter:description" content={ desc }/>
+	<link rel="stylesheet" href="/assets/styles/app.min.css"/>
+	if helpers.ChromaLightCSS != "" && helpers.ChromaDarkCSS != "" {
+		@chromaCSS()
+	}
+}

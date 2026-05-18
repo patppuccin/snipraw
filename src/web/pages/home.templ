@@ -1,0 +1,92 @@
+package pages
+
+import (
+	"github.com/patppuccin/snipraw/src/config"
+	"github.com/patppuccin/snipraw/src/web"
+	"github.com/patppuccin/snipraw/src/web/layouts"
+	"strconv"
+)
+
+type HomePageProps struct {
+	Projects []web.Project
+}
+
+templ Home(cfg *config.Config, p HomePageProps) {
+	@layouts.BaseLayout(layouts.Props{
+		Title: "Home",
+		Desc:  "A filesystem-based code snippet server.",
+		Cfg:   cfg,
+	}) {
+		@home(p)
+	}
+}
+
+templ home(p HomePageProps) {
+	<div class="flex flex-col gap-12">
+		<div class="flex flex-col items-center gap-6 pt-6">
+			<p class="text-base-content/50 text-base">Browse and explore your local code collection.</p>
+			<input
+				id="search"
+				type="text"
+				placeholder="Search projects..."
+				class="input input-bordered w-full max-w-2xl focus:outline-none focus:border-primary"
+				oninput="filterProjects(this.value)"
+				autofocus
+			/>
+		</div>
+		if len(p.Projects) == 0 {
+			<div class="hero py-20">
+				<div class="hero-content text-center">
+					<div>
+						<h2 class="text-2xl font-bold">No projects yet</h2>
+						<p class="text-base-content/60 mt-2">Add a project folder(s) to get started.</p>
+					</div>
+				</div>
+			</div>
+		} else {
+			<div id="projects-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+				for _, proj := range p.Projects {
+					<a
+						href={ templ.SafeURL("/project/" + proj.Name) }
+						class="card bg-base-200 hover:bg-base-300 transition-colors focus:outline-none focus:ring focus:ring-primary"
+						data-name={ proj.Name }
+						tabindex="0"
+					>
+						<div class="card-body">
+							<h2 class="card-title text-base">{ proj.Name }</h2>
+							<p class="text-sm text-base-content/50">Contains { strconv.Itoa(proj.FileCount) } file(s)</p>
+						</div>
+					</a>
+				}
+			</div>
+			<div id="no-results" class="hero py-20 hidden">
+				<div class="hero-content text-center">
+					<div>
+						<h2 class="text-2xl font-bold">No matches</h2>
+						<p class="text-base-content/60 mt-2">No projects match your search.</p>
+					</div>
+				</div>
+			</div>
+		}
+	</div>
+	<script>
+		function filterProjects(query) {
+			const q = query.toLowerCase()
+			const cards = document.querySelectorAll('#projects-grid [data-name]')
+			let hits = 0
+			cards.forEach(card => {
+				const match = card.dataset.name.toLowerCase().includes(q)
+				card.style.display = match ? '' : 'none'
+				if (match) hits++
+			})
+			document.getElementById('no-results').classList.toggle('hidden', hits > 0)
+		}
+
+		document.addEventListener('keydown', (e) => {
+			if (e.key === '/' && !['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName)) {
+				e.preventDefault()
+				document.getElementById('search').focus()
+			}
+		})
+	</script>
+}

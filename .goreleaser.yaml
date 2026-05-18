@@ -1,0 +1,76 @@
+# Release manifest for snipraw
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+
+version: 2
+
+snapshot:
+  version_template: "dev"
+
+before:
+  hooks:
+    - tools/templ generate
+    - tools/tailwindcss --input ./src/web/styles/input.css --output ./src/server/assets/styles/app.min.css --minify
+    - go mod tidy
+
+builds:
+  - env:
+      - CGO_ENABLED=0
+    main: ./main.go
+    binary: snipraw
+    goos:
+      - linux
+      - windows
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    ldflags:
+      - -s -w
+      - -X github.com/patppuccin/snipraw/src/consts.AppVersion={{.Version}}
+      - -X github.com/patppuccin/snipraw/src/consts.BuildCommit={{.ShortCommit}}
+      - -X github.com/patppuccin/snipraw/src/consts.BuildDate={{.Date}}
+    flags:
+      - -trimpath
+
+dockers_v2:
+  - images:
+      - ghcr.io/patppuccin/snipraw
+      - docker.io/patppuccin/snipraw
+    tags:
+      - "{{ .Tag }}"
+      - "{{ if not .IsSnapshot }}latest{{ end }}"
+    platforms:
+      - linux/amd64
+      - linux/arm64
+    labels:
+      "org.opencontainers.image.title": "{{ .ProjectName }}"
+      "org.opencontainers.image.version": "{{ .Version }}"
+      "org.opencontainers.image.revision": "{{ .FullCommit }}"
+      "org.opencontainers.image.created": "{{ .Date }}"
+      "org.opencontainers.image.source": "https://github.com/patppuccin/snipraw"
+    disable: false
+
+archives:
+  - formats: [tar.gz]
+    name_template: >-
+      {{ .ProjectName }}-{{ .Os }}-{{ if eq .Arch "amd64" }}x86_64{{ else if eq .Arch "386" }}i386{{ else }}{{ .Arch }}{{ end }}
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+
+changelog:
+  sort: asc
+  filters:
+    exclude:
+      - "^docs:"
+      - "^test:"
+      - "^chore:"
+      - "^ci:"
+
+release:
+  footer: >-
+
+    ---
+
+    Find installation and usage instructions [on the readme page](https://github.com/patppuccin/snipraw#readme).
+    Released using [GoReleaser](https://github.com/goreleaser/goreleaser).
