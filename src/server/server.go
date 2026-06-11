@@ -27,6 +27,12 @@ func router(appCtx *appCtx) (http.Handler, error) {
 	r.Use(middleware.Recoverer)
 	r.Use(middleware.RealIP)
 	r.Use(middleware.StripSlashes)
+	r.Use(func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.Header().Set("Content-Language", "en")
+			next.ServeHTTP(w, r)
+		})
+	})
 	r.Use(middleware.Compress(5,
 		"text/html",
 		"text/css",
