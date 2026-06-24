@@ -214,7 +214,7 @@ func CodeHighlight(content []byte, filename string) (string, error) {
 	)
 
 	var buf strings.Builder
-	iterator, err := lexer.Tokenise(nil, string(content))
+	iterator, err := lexer.Tokenise(nil, strings.ReplaceAll(string(content), "\r\n", "\n"))
 	if err != nil {
 		return "", err
 	}

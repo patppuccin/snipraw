@@ -210,7 +210,10 @@ templ fileView(p ProjectPageProps) {
 		function copyContent(btn) {
 			if (btn.disabled) return
 			btn.disabled = true
-			const text = document.getElementById('code-content').innerText
+			const container = document.getElementById('code-content')
+			const lntds = container.querySelectorAll('.lntd')
+			const sourceEl = lntds.length > 1 ? lntds[lntds.length - 1] : container
+			const text = sourceEl.innerText.replace(/\r/g, '')
 			navigator.clipboard.writeText(text).then(() => {
 				btn.textContent = 'Copied to clipboard'
 				btn.classList.add('text-success')
